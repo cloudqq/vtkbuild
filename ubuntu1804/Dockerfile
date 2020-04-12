@@ -11,21 +11,39 @@ RUN apt-get update && apt-get  -y install \
         libssl-dev \
         python2.7 \
         re2c \
+        libffi-dev \
 	ninja-build \
 	build-essential
 
 WORKDIR /temp
-RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-${CMAKE_VER}.tar.gz
-RUN tar xvf cmake-${CMAKE_VER}.tar.gz
-RUN cd cmake-${CMAKE_VER} && ./bootstrap && make -j`nproc` && make install
-RUN rm -rf /temp
-RUN cmake --version
-RUN git clone git://github.com/ninja-build/ninja.git 
-RUN cd ninja && git checkout release && python2.7 configure.py && ninja && cp ninja /usr/bin 
-RUN rm -rf /temp
+RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-${CMAKE_VER}.tar.gz \
+    && tar xvf cmake-${CMAKE_VER}.tar.gz && cd cmake-${CMAKE_VER} && ./bootstrap && make -j`nproc` && make install \
+    && cmake --version \
+    && rm -rf /temp
 
+RUN git clone git://github.com/ninja-build/ninja.git && cd ninja && git checkout release && python2.7 configure.py && ninja && cp ninja /usr/bin && rm -rf /temp
 
-
+RUN    wget https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/llvm-10.0.0.src.tar.xz \
+    && wget https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang-10.0.0.src.tar.xz \
+    && wget https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/compiler-rt-10.0.0.src.tar.xz \
+    && tar -xf clang-10.0.0.src.tar.xz -C tools \
+    && tar -xf compiler-rt-10.0.0.src.tar.xz -C projects \
+    && tar -xf llvm-10.0.0.src.tar.xz \
+    && mv tools/clang-10.0.0.src llvm-10.0.0.src\tools\clang \
+    && mv projects/compiler-rt-10.0.0.src llvm-10.0.0.src\projects/compiler-rt \
+    && cd llvm-10.0.0.src && mkdir -v build && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr           \
+       -DLLVM_ENABLE_FFI=ON                      \
+       -DCMAKE_BUILD_TYPE=Release                \
+       -DLLVM_BUILD_LLVM_DYLIB=ON                \
+       -DLLVM_LINK_LLVM_DYLIB=ON                 \
+       -DLLVM_ENABLE_RTTI=ON                     \
+       -DLLVM_TARGETS_TO_BUILD="host;AMDGPU;BPF" \
+       -DLLVM_BUILD_TESTS=ON                     \
+       -Wno-dev -G Ninja .. \
+    && ninja && ninja install \
+    && rm -rf /temp
+                     
 
 
 
