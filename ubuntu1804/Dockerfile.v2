@@ -3,6 +3,7 @@ FROM ubuntu:18.04
 ENV DEBIAN_FRONTEND noninteractive
 
 ENV CMAKE_VER 3.17.1
+ENV PYTHON_VER 3.8.2
 
 RUN apt-get update && apt-get  -y install \
 	curl \
@@ -13,7 +14,21 @@ RUN apt-get update && apt-get  -y install \
         re2c \
         libffi-dev \
 	ninja-build \
-	build-essential
+	build-essential \
+	zlib1g-dev \
+	libncurses5-dev \
+       	libncursesw5-dev \
+        libreadline-dev \
+        libsqlite3-dev  \
+        libgdbm-dev \
+        libdb5.3-dev \
+ 	libbz2-dev \
+ 	libexpat1-dev \
+        liblzma-dev \
+        tk-dev  \
+	libpciaccess-dev libelf-dev bison flex \
+ 	libwayland-dev 	wayland-protocols libwayland-egl-backend-dev libxdamage-dev libxcb-glx0  libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libgl1-mesa-dev \
+ 	libxrandr-dev libxrandr2 mesa-utils xvfb
 
 WORKDIR /temp
 RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-${CMAKE_VER}.tar.gz \
@@ -45,19 +60,6 @@ RUN    wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10
     && ninja && ninja install \
     && rm -rf /temp
                      
-ENV PYTHON_VER 3.8.2
-RUN apt-get update && apt-get  -y install \
-	zlib1g-dev \
-	libncurses5-dev \
-       	libncursesw5-dev \
-        libreadline-dev \
-        libsqlite3-dev  \
-        libgdbm-dev \
-        libdb5.3-dev \
- 	libbz2-dev \
- 	libexpat1-dev \
-        liblzma-dev \
-        tk-dev 
 
 # install build tools and python prerequisites
 
@@ -77,7 +79,6 @@ RUN python3 --version && pip3 install --upgrade pip && pip3 --version
 RUN pip3 install meson && meson --version
 RUN pip3 install mako
 
-RUN apt-get -y install libpciaccess-dev libelf-dev bison flex
 # install libdrm
 RUN wget -q https://dri.freedesktop.org/libdrm/libdrm-2.4.101.tar.xz \
     && tar xvf libdrm-2.4.101.tar.xz \
@@ -89,8 +90,6 @@ RUN wget -q https://sourceware.org/ftp/valgrind/valgrind-3.15.0.tar.bz2 \
     && ./configure --prefix=/usr \
             --datadir=/usr/share/doc/valgrind-3.15.0 && make -j`nproc` && make install
   
-RUN apt-get -y install 	libwayland-dev 	wayland-protocols libwayland-egl-backend-dev libxdamage-dev libxcb-glx0  libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libgl1-mesa-dev \
- libxrandr-dev libxrandr2 mesa-utils xvfb
 RUN wget -q https://mesa.freedesktop.org/archive/mesa-20.0.4.tar.xz \
     && tar xvf mesa-20.0.4.tar.xz  && mkdir build \
     && cd    build  \
