@@ -23,16 +23,17 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-
 
 RUN git clone git://github.com/ninja-build/ninja.git && cd ninja && git checkout release && python2.7 configure.py && ninja && cp ninja /usr/bin && rm -rf /temp
 
-RUN    wget https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/llvm-10.0.0.src.tar.xz \
-    && wget https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang-10.0.0.src.tar.xz \
-    && wget https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/compiler-rt-10.0.0.src.tar.xz \
-    && tar -xf clang-10.0.0.src.tar.xz -C tools \
-    && tar -xf compiler-rt-10.0.0.src.tar.xz -C projects \
-    && tar -xf llvm-10.0.0.src.tar.xz \
-    && mv tools/clang-10.0.0.src llvm-10.0.0.src\tools\clang \
-    && mv projects/compiler-rt-10.0.0.src llvm-10.0.0.src\projects/compiler-rt \
-    && cd llvm-10.0.0.src && mkdir -v build && cd build \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr           \
+RUN    wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/llvm-10.0.0.src.tar.xz \
+    && wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang-10.0.0.src.tar.xz \
+    && wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/compiler-rt-10.0.0.src.tar.xz \
+    && tar xf llvm-10.0.0.src.tar.xz \
+    && cd llvm-10.0.0.src \
+    && tar xvf ../compiler-rt-10.0.0.src.tar.xz -C projects \
+    && tar xvf ../clang-10.0.0.src.tar.xz -C tools \
+    && mv tools/clang-10.0.0.src tools/clang \
+    && mv projects/compiler-rt-10.0.0.src projects/compiler-rt \
+    && mkdir -v build && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr         \
        -DLLVM_ENABLE_FFI=ON                      \
        -DCMAKE_BUILD_TYPE=Release                \
        -DLLVM_BUILD_LLVM_DYLIB=ON                \
