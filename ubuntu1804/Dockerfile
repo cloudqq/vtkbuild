@@ -16,6 +16,7 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-
 RUN tar xvf cmake-${CMAKE_VER}.tar.gz
 RUN cd cmake-${CMAKE_VER} && ./bootstrap && make -j`nproc` && make install
 RUN rm -rf /temp
+RUN cmake --version
 
 #RUN wget https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz 
 #RUN tar -tvf clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz 
