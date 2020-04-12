@@ -70,8 +70,11 @@ RUN wget https://www.python.org/ftp/python/${PYTHON_VER}/Python-${PYTHON_VER}.ta
     && make altinstall \
     && update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.8 1 \
     && update-alternatives --config python3
-RUN python3 --version
+RUN update-alternatives --install /usr/bin/pip3 pip3 /usr/local/bin/pip3.8 1 \
+    && update-alternatives --config pip3
+RUN python3 --version && pip3 install --upgrade pip && pip3 --version
 
+RUN pip3 install meson && meson --version
 
 
 #RUN wget https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz 
