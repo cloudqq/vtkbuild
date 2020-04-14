@@ -3,7 +3,8 @@ FROM ubuntu:18.04
 ENV DEBIAN_FRONTEND noninteractive
 
 ENV CMAKE_VER 3.17.1
-ENV PYTHON_VER 3.8.2
+ENV PYTHON3_VER 3.8.2
+ENV PYTHON2_VER 2.7.17
 
 RUN apt-get update && apt-get  -y install \
 	curl \
@@ -26,9 +27,14 @@ RUN apt-get update && apt-get  -y install \
  	libexpat1-dev \
         liblzma-dev \
         tk-dev  \
+        sudo \
+        locales \
 	libpciaccess-dev libelf-dev bison flex \
  	libwayland-dev 	wayland-protocols libwayland-egl-backend-dev libxdamage-dev libxcb-glx0  libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libgl1-mesa-dev \
  	libxrandr-dev libxrandr2 mesa-utils xvfb x11vnc
+
+COPY asEnvUser /usr/local/sbin/
+RUN chown root /usr/local/sbin/asEnvUser && chmod 700 /usr/local/sbin/asEnvUser
 
 WORKDIR /temp
 
@@ -70,9 +76,9 @@ RUN    wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10
 # install build tools and python prerequisites
 
 # download and extract python
-RUN wget https://www.python.org/ftp/python/${PYTHON_VER}/Python-${PYTHON_VER}.tar.xz \
-    && tar xf Python-${PYTHON_VER}.tar.xz \
-    && cd Python-${PYTHON_VER} \
+RUN wget https://www.python.org/ftp/python/${PYTHON3_VER}/Python-${PYTHON3_VER}.tar.xz \
+    && tar xf Python-${PYTHON3_VER}.tar.xz \
+    && cd Python-${PYTHON3_VER} \
     && ./configure --enable-optimizations \
     && make -j `nproc`  \
     && make altinstall \
@@ -84,6 +90,20 @@ RUN python3 --version && pip3 install --upgrade pip && pip3 --version
 
 RUN pip3 install meson && meson --version
 RUN pip3 install mako
+
+# install python2.7.17
+RUN wget https://www.python.org/ftp/python/${PYTHON2_VER}/Python-${PYTHON2_VER}.tar.xz \
+    && tar xf Python-${PYTHON2_VER}.tar.xz \
+    && cd Python-${PYTHON2_VER} \
+    && ./configure --enable-optimizations \
+    && make -j `nproc`  \
+    && make altinstall \
+    && update-alternatives --install /usr/bin/python python /usr/local/bin/python2.7 1 \
+    && update-alternatives --config python
+
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python get-pip.py && pip install -U pip
+
+RUN python --version && pip --version
 
 # install libdrm
 RUN wget -q https://dri.freedesktop.org/libdrm/libdrm-2.4.101.tar.xz \
@@ -128,6 +148,7 @@ RUN wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz \
     && tar xvf VTK-8.2.0.tar.gz \
     && mkdir build-vtk-8.2.0-off && cd build-vtk-8.2.0-off \
     && cmake -D CMAKE_BUILD_TYPE=Release \
+    -D PYTHON_INCLUDE_DIR=/usr/local/include/python2.7 \
     -D VTK_WRAP_PYTHON=OFF	 \
     -D VTK_OPENGL_HAS_OSMESA=ON \
     -D VTK_DEFAULT_RENDER_WINDOW_OFFSCREEN=ON \
@@ -139,6 +160,7 @@ RUN wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz \
     && make -j`nproc` && make install \
     && cd /workspace && mkdir build-vtk-8.2.0-on && cd build-vtk-8.2.0-on \
     && cmake -D CMAKE_BUILD_TYPE=Release \
+    -D PYTHON_INCLUDE_DIR=/usr/local/include/python2.7 \
     -D VTK_WRAP_PYTHON=OFF	 \
     -D VTK_OPENGL_HAS_OSMESA=ON \
     -D VTK_DEFAULT_RENDER_WINDOW_OFFSCREEN=OFF \
