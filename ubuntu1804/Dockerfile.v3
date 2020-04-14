@@ -150,9 +150,13 @@ RUN wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz \
     && make -j`nproc` && make install  \
     && rm -rf /workspace/build-vtk-8.2.0-on && rm -rf /workspace/build-vtk-8.2.0-off
 
-RUN echo 'LC_ALL=zh_CN.UTF-8' > /etc/default/locale && \
+RUN apt-get install locales sudo \
+  && echo 'LC_ALL=zh_CN.UTF-8' > /etc/default/locale && \
   echo 'LANG=zh_CN.UTF-8' >> /etc/default/locale && \
-  locale-gen zh_CN.UTF-8
+  locale-gen zh_CN.UTF-8 
+
+COPY asEnvUser /usr/local/sbin/
+RUN chown root /usr/local/sbin/asEnvUser && chmod 700 /usr/local/sbin/asEnvUser
 
 ENV LC_CTYPE zh_CN.UTF-8
 
