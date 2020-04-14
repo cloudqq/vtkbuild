@@ -21,4 +21,6 @@ docker run -it --rm \
 	 -e LC_CTYPE=en_US.UTF-8 \
 	 -v ${HOME}/.Xauthority:/home/${USER}/.Xauthority \
 	 -w "${WORKDIR}" \
-	 vtk82 
+	 cloudqq/vtk82:20200414
+
+# xvfb-run -a --server-args="-screen 0 1024x768x24" glxinfo | grep OpenGL

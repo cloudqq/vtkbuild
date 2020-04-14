@@ -29,12 +29,13 @@ WORKDIR /workspace
 RUN wget https://www.python.org/ftp/python/${PYTHON_VER}/Python-${PYTHON_VER}.tar.xz \
     && tar xf Python-${PYTHON_VER}.tar.xz \
     && cd Python-${PYTHON_VER} \
-    && ./configure --enable-optimizations \
+    && ./configure --enable-optimizations --enable-shared \
     && make -j `nproc`  \
     && make altinstall \
     && update-alternatives --install /usr/bin/python python /usr/local/bin/python2.7 1 \
     && update-alternatives --config python
 
+RUN ldconfig && ldconfig -p | grep python
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python get-pip.py && pip install -U pip
 
 RUN python --version
