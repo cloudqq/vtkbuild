@@ -1,0 +1,39 @@
+FROM ubuntu:18.04
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get -y install software-properties-common && apt-get update \
+     &&   apt-add-repository -y ppa:x2go/stable \
+        && apt-get update && apt-get  -y install \
+        curl \
+        wget \
+        git \
+	openssh-server \
+	x2goserver \
+	x2goserver-xsession \
+	x2gomatebindings \
+	icewm
+# Disable SSH DNS lookup becase it slows down SSH login terribly.
+
+RUN (mkdir -p /var/run/sshd && \
+     sed -ri 's/UseDNS yes/#UseDNS yes/g' /etc/ssh/sshd_config && \
+     echo "UseDNS no" >> /etc/ssh/sshd_config)
+#create a user
+RUN (useradd -m docker && \
+     mkdir -p /home/docker/.ssh && \
+     chmod 700 /home/docker/.ssh && \
+     chown docker:docker /home/docker/.ssh && \
+     mkdir -p /etc/sudoers.d)
+
+ADD ./999-sudoers-docker /etc/sudoers.d/999-sudoers-docker
+RUN chmod 440 /etc/sudoers.d/999-sudoers-docker
+
+# Startup script
+ADD ./start-sshd.sh /root/start-sshd.sh
+RUN chmod 744 /root/start-sshd.sh
+
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+EXPOSE 22
+
+ENTRYPOINT ["/root/start-sshd.sh"]
