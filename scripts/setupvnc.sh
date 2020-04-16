@@ -22,6 +22,7 @@ docker run -it --rm \
 	 -p 5900:5900 \
 	 -p 6808:6808 \
 	 -w "${WORKDIR}" \
-	 vtk82vnc:latest
+	 vtkffmpeg:latest
+	 #vtk82vnc:latest
 
 # xvfb-run -a --server-args="-screen 0 1024x768x24" glxinfo | grep OpenGL
