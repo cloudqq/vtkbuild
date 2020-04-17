@@ -8,16 +8,16 @@ ENV PYTHON2_VER 2.7.17
 ENV PREFIX=/opt
 
 RUN apt-get update && apt-get  -y install \
-	curl \
-	wget \
-	git \
-        libssl-dev \
-        re2c \
-        libffi-dev \
-	build-essential \
-	zlib1g-dev \
-	libncurses5-dev \
-       	libncursesw5-dev 
+  curl \
+  wget \
+  git \
+  libssl-dev \
+  re2c \
+  libffi-dev \
+  build-essential \
+  zlib1g-dev \
+  libncurses5-dev \
+  libncursesw5-dev 
 
 WORKDIR /temp
 
@@ -94,6 +94,7 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-
        -DLLVM_TARGETS_TO_BUILD="host;AMDGPU;BPF" \
        -DLLVM_BUILD_TESTS=ON                     \
        -Wno-dev -G Ninja ..                      \
+    && ninja && ninja install 			 \
     && rm -rf /temp
 
 RUN apt-get -y install libpciaccess-dev pkg-config
@@ -101,6 +102,28 @@ RUN apt-get -y install libpciaccess-dev pkg-config
 RUN cd /temp && wget -q https://dri.freedesktop.org/libdrm/libdrm-2.4.101.tar.xz \
     && tar xvf libdrm-2.4.101.tar.xz \
     && cd libdrm-2.4.101 && mkdir build && cd build && meson .. -Dudev=true && ninja install
+
+ENV PATH=${PATH}:${PREFIX}/bin
+
+RUN cd /temp \
+    && pip3 install mako \
+    && apt-get -y install libexpat1-dev libelf-dev bison flex libgl1-mesa-dev libwayland-dev wayland-protocols libwayland-egl-backend-dev \
+    libxrandr-dev libxrandr2  \
+    && wget -q https://mesa.freedesktop.org/archive/mesa-20.0.4.tar.xz \
+    && tar xvf mesa-20.0.4.tar.xz  && mkdir build \
+    && cd    build  \
+    && CXXFLAGS="-O2 -g -DDEFAULT_SOFTWARE_DEPTH_BITS=31"   CFLAGS="-O2 -g -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
+     meson \
+     -Dbuildtype=release            \
+     -Dgallium-drivers="swrast"     \
+     -Dgallium-nine=false           \
+     -Dglx=dri                      \
+     -Dosmesa=gallium               \
+     -Dvalgrind=false               \
+     -Dlibunwind=false              \
+     ../mesa-20.0.4                 \
+     && unset GALLIUM_DRV DRI_DRIVERS \
+     && ninja install
 
 COPY asEnvUser /usr/local/sbin/
 RUN chown root /usr/local/sbin/asEnvUser && chmod 700 /usr/local/sbin/asEnvUser
