@@ -19,8 +19,10 @@ docker run -it --rm \
 	 -e LANG=zh_CN.UTF-8 \
 	 -e LANGUAGE=zh_CN:en_US \
 	 -e LC_CTYPE=en_US.UTF-8 \
+	 -p 5900:5900 \
+	 -p 6808:6808 \
 	 -v ${HOME}/.Xauthority:/home/${USER}/.Xauthority \
 	 -w "${WORKDIR}" \
-	 cloudqq/vtk82:20200414
+	 vtkffmpeg:latest
 
 # xvfb-run -a --server-args="-screen 0 1024x768x24" glxinfo | grep OpenGL

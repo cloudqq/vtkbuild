@@ -5,33 +5,39 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV CMAKE_VER 3.17.1
 ENV PYTHON3_VER 3.8.2
 ENV PYTHON2_VER 2.7.17
+ENV VTK_MAJOR_VER 7.1
+ENV VTK_VER 7.1.1
 
-RUN apt-get update && apt-get  -y install \
-	curl \
-	wget \
-	git \
-        libssl-dev \
-        python2.7 \
-        re2c \
-        libffi-dev \
-	ninja-build \
-	build-essential \
-	zlib1g-dev \
-	libncurses5-dev \
-       	libncursesw5-dev \
-        libreadline-dev \
-        libsqlite3-dev  \
-        libgdbm-dev \
-        libdb5.3-dev \
- 	libbz2-dev \
- 	libexpat1-dev \
-        liblzma-dev \
-        tk-dev  \
-        sudo \
-        locales \
-	libpciaccess-dev libelf-dev bison flex \
- 	libwayland-dev 	wayland-protocols libwayland-egl-backend-dev libxdamage-dev libxcb-glx0  libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libgl1-mesa-dev \
- 	libxrandr-dev libxrandr2 mesa-utils xvfb x11vnc
+RUN apt-get update && apt-get -y install \
+    curl \
+    wget \
+    git \
+    libssl-dev \
+    python2.7 \
+    re2c \
+    libffi-dev \
+    ninja-build \
+    build-essential \
+    zlib1g-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    libreadline-dev \
+    libsqlite3-dev  \
+    libgdbm-dev \
+    libdb5.3-dev \
+    libbz2-dev \
+    libexpat1-dev \
+    liblzma-dev \
+    tk-dev  \
+    sudo \
+    locales \
+    libpciaccess-dev libelf-dev bison flex \
+    libwayland-dev wayland-protocols libwayland-egl-backend-dev libxdamage-dev libxcb-glx0  libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libgl1-mesa-dev \
+    libxrandr-dev libxrandr2 mesa-utils xvfb x11vnc \
+    ffmpeg libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev libpostproc-dev libswresample-dev \
+    libswscale-dev  \
+    libsdl2-dev libsdl2-2.0-0 \
+    libsdl1.2-dev
 
 COPY asEnvUser /usr/local/sbin/
 RUN chown root /usr/local/sbin/asEnvUser && chmod 700 /usr/local/sbin/asEnvUser
@@ -71,7 +77,6 @@ RUN    wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10
        -Wno-dev -G Ninja .. \
     && ninja && ninja install \
     && rm -rf /temp
-
 
 # install build tools and python prerequisites
 
@@ -146,9 +151,9 @@ RUN wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.
     && ./b2 cxxflags="--std=c++17" -j`nproc` install
 
 # install vtk
-RUN wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz \
-    && tar xvf VTK-8.2.0.tar.gz \
-    && mkdir build-vtk-8.2.0-off && cd build-vtk-8.2.0-off \
+RUN wget https://www.vtk.org/files/release/${VTK_MAJOR_VER}/VTK-${VTK_VER}.tar.gz \
+    && tar xvf VTK-${VTK_VER}.tar.gz \
+    && mkdir build-vtk-${VTK_VER}-off && cd build-vtk-${VTK_VER}-off \
     && cmake -D CMAKE_BUILD_TYPE=Release \
     -D PYTHON_INCLUDE_DIR=/usr/local/include/python2.7 \
     -D PYTHON_LIBRARY=/usr/local/lib/libpython2.7.so \
@@ -160,9 +165,9 @@ RUN wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz \
     -D CMAKE_INSTALL_PREFIX=/usr/local/vtk820offscreen \
     -D LIBRARY_OUTPUT_PATH=./output_libs \
     -D BOOST_ROOT=/usr/local/boost_1_72_0 \
-    ../VTK-8.2.0 \
+    ../VTK-${VTK_VER} \
     && make -j`nproc` && make install \
-    && cd /workspace && mkdir build-vtk-8.2.0-on && cd build-vtk-8.2.0-on \
+    && cd /workspace && mkdir build-vtk-${VTK_VER}-on && cd build-vtk-${VTK_VER}-on \
     && cmake -D CMAKE_BUILD_TYPE=Release \
     -D PYTHON_INCLUDE_DIR=/usr/local/include/python2.7 \
     -D PYTHON_LIBRARY=/usr/local/lib/libpython2.7.so \
@@ -174,9 +179,9 @@ RUN wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz \
     -D CMAKE_INSTALL_PREFIX=/usr/local/vtk820onscreen \
     -D LIBRARY_OUTPUT_PATH=./output_libs \
     -D BOOST_ROOT=/usr/local/boost_1_72_0 \
-    /workspace/VTK-8.2.0 \
+    /workspace/VTK-${VTK_VER} \
     && make -j`nproc` && make install  \
-    && rm -rf /workspace/build-vtk-8.2.0-on && rm -rf /workspace/build-vtk-8.2.0-off
+    && rm -rf /workspace/build-vtk-${VTK_VER}-on && rm -rf /workspace/build-vtk-${VTK_VER}-off
 
 RUN ldconfig
 RUN git clone https://github.com/novnc/noVNC.git /opt/novnc \
