@@ -109,10 +109,13 @@ ENV PATH=${PATH}:${PREFIX}/bin
 
 RUN cd /temp \
     && pip3 install mako \
-    && apt-get -y install libexpat1-dev libelf-dev bison flex libgl1-mesa-dev libwayland-dev wayland-protocols libwayland-egl-backend-dev \
+    && apt-get -y install libexpat1-dev libelf-dev bison flex libwayland-dev wayland-protocols libwayland-egl-backend-dev \
     libxrandr-dev libxrandr2  \
+ 	libxdamage-dev libxcb-glx0  libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libgl1-mesa-dev \
+ 	libxrandr-dev libxrandr2 \
     && wget -q https://mesa.freedesktop.org/archive/mesa-20.0.4.tar.xz \
     && tar xvf mesa-20.0.4.tar.xz  && mkdir build \
+    && ls -lah \
     && cd    build  \
     && CXXFLAGS="-O2 -g -DDEFAULT_SOFTWARE_DEPTH_BITS=31"   CFLAGS="-O2 -g -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
      meson \
@@ -126,85 +129,6 @@ RUN cd /temp \
      ../mesa-20.0.4                 \
      && unset GALLIUM_DRV DRI_DRIVERS \
      && ninja install
-
-
-RUN cd /temp && wget -q https://www.tcpdump.org/release/libpcap-1.9.1.tar.gz \
-&& tar xvf libpcap-1.9.1.tar.gz && cd libpcap-1.9.1 && ./configure --prefix=${PREFIX} && make -j`nproc` && make install
-
-# include boost
-RUN cd /temp && wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 \
-    && tar xjf boost_1_72_0.tar.bz2 && cd boost_1_72_0 \
-    && ./bootstrap.sh --prefix=${PREFIX} \
-    && ./b2 cxxflags="--std=c++17" -j`nproc` install
-
-
-# install vtk
-RUN cd /temp && wget https://www.vtk.org/files/release/${VTK_MAJOR_VER}/VTK-${VTK_VER}.tar.gz \
-    && tar xvf VTK-${VTK_VER}.tar.gz \
-    && mkdir build-vtk-${VTK_VER}-off && cd build-vtk-${VTK_VER}-off \
-    && cmake -D CMAKE_BUILD_TYPE=Release \
-    -D PYTHON_INCLUDE_DIR=${PREFIX}/include/python2.7 \
-    -D PYTHON_LIBRARY=${PREFIX}/lib/libpython2.7.so \
-    -D PYTHON_EXECUTABLE:FILEPATH=`which python` \
-    -D VTK_WRAP_PYTHON=ON	 \
-    -D VTK_OPENGL_HAS_OSMESA=ON \
-    -D VTK_DEFAULT_RENDER_WINDOW_OFFSCREEN=ON \
-    -D VTK_USE_X=OFF \
-    -D CMAKE_INSTALL_PREFIX=${PREFIX}/vtk${VTK_VER}offscreen \
-    -D LIBRARY_OUTPUT_PATH=./output_libs \
-    -D BOOST_ROOT=${PREFIX} \
-    ../VTK-${VTK_VER} \
-    && make -j`nproc` && make install \
-    && cd /temp && mkdir build-vtk-${VTK_VER}-on && cd build-vtk-${VTK_VER}-on \
-    && cmake -D CMAKE_BUILD_TYPE=Release \
-    -D PYTHON_INCLUDE_DIR=${PREFIX}/include/python2.7 \
-    -D PYTHON_LIBRARY=${PREFIX}/lib/libpython2.7.so \
-    -D PYTHON_EXECUTABLE:FILEPATH=`which python` \
-    -D VTK_WRAP_PYTHON=ON	 \
-    -D VTK_OPENGL_HAS_OSMESA=ON \
-    -D VTK_DEFAULT_RENDER_WINDOW_OFFSCREEN=OFF \
-    -D VTK_USE_X=ON \
-    -D CMAKE_INSTALL_PREFIX=${PREFIX}/vtk${VTK_VER}onscreen \
-    -D LIBRARY_OUTPUT_PATH=./output_libs \
-    -D BOOST_ROOT=${PREFIX} \
-    ../VTK-${VTK_VER} \
-    && make -j`nproc` && make install  
-    #&& rm -rf /workspace/build-vtk-${VTK_VER}-on && rm -rf /workspace/build-vtk-${VTK_VER}-off
-
-    #RUN cd /temp && wget https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz \
-    #    && tar xvf VTK-8.2.0.tar.gz \
-    #    && mkdir build-vtk-8.2.0-off && cd build-vtk-8.2.0-off \
-    #    && cmake -D CMAKE_BUILD_TYPE=Release \
-    #    -D PYTHON_INCLUDE_DIR=${PREFIX}/include/python2.7 \
-    #    -D PYTHON_LIBRARY=${PREFIX}/lib/libpython2.7.so \
-    #    -D PYTHON_EXECUTABLE:FILEPATH=`which python` \
-    #    -D VTK_WRAP_PYTHON=ON	 \
-    #    -D VTK_OPENGL_HAS_OSMESA=ON \
-    #    -D VTK_DEFAULT_RENDER_WINDOW_OFFSCREEN=ON \
-    #    -D VTK_USE_X=OFF \
-    #    -D CMAKE_INSTALL_PREFIX=${PREFIX}/vtk820offscreen \
-    #    -D LIBRARY_OUTPUT_PATH=./output_libs \
-    #    -D BOOST_ROOT=${PREFIX} \
-    #    ../VTK-8.2.0 \
-    #    && make -j`nproc` && make install \
-    #    && cd /workspace && mkdir build-vtk-8.2.0-on && cd build-vtk-8.2.0-on \
-    #    && cmake -D CMAKE_BUILD_TYPE=Release \
-    #    -D PYTHON_INCLUDE_DIR=${PREFIX}/include/python2.7 \
-    #    -D PYTHON_LIBRARY=${PREFIX}/lib/libpython2.7.so \
-    #    -D PYTHON_EXECUTABLE:FILEPATH=`which python` \
-    #    -D VTK_WRAP_PYTHON=ON	 \
-    #    -D VTK_OPENGL_HAS_OSMESA=ON \
-    #    -D VTK_DEFAULT_RENDER_WINDOW_OFFSCREEN=OFF \
-    #    -D VTK_USE_X=ON \
-    #    -D CMAKE_INSTALL_PREFIX=${PREFIX}/vtk820onscreen \
-    #    -D LIBRARY_OUTPUT_PATH=./output_libs \
-    #    -D BOOST_ROOT=${PREFIX} \
-    #    ../VTK-8.2.0 \
-    #    && make -j`nproc` && make install  
-    #    #&& rm -rf /workspace/build-vtk-8.2.0-on && rm -rf /workspace/build-vtk-8.2.0-off
-    #
-
-
 
 
 COPY asEnvUser /usr/local/sbin/
