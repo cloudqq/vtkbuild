@@ -28,12 +28,11 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-
 RUN wget https://www.python.org/ftp/python/${PYTHON2_VER}/Python-${PYTHON2_VER}.tar.xz \
     && tar xf Python-${PYTHON2_VER}.tar.xz \
     && cd Python-${PYTHON2_VER} \
-    && ./configure --prefix=${PREFIX} --enable-optimizations --enable-shared \
+    && ./configure --prefix=${PREFIX} --enable-shared \
     && make -j `nproc`  \
-    && make install 
+    && make altinstall \
+    && update-alternatives --install ${PREFIX}/bin/python python /opt/bin/python2.7 1 \
+    && update-alternatives --config python
 
-    #&& make altinstall \
-    #&& update-alternatives --install ${PREFIX}/bin/python python /usr/local/bin/python2.7 1 \
-    #&& update-alternatives --config python
-
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && /opt/bin/python2.7 get-pip.py && pip install -U pip
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PREFIX}/lib
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && /opt/bin/python2.7 get-pip.py && ${PREFIX}/bin/pip install -U pip
