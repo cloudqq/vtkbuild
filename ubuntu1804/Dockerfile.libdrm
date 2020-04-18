@@ -1,0 +1,26 @@
+# cmake ninja meson python3
+FROM llvmenv:latest as builder
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV CMAKE_VER 3.17.1
+
+ENV PREFIX=/fakeroot
+WORKDIR /temp
+
+ENV build_depends="libexpat1-dev libelf-dev bison flex libgl1-mesa-dev libwayland-dev wayland-protocols libwayland-egl-backend-dev libxrandr-dev libxrandr2"
+ENV drm_build_packages="libpciaccess-dev pkg-config"
+
+RUN apt-get update && apt-get  -y install ${build_depends} ${drm_build_packages}
+
+# install libdrm
+RUN cd /temp && wget -q https://dri.freedesktop.org/libdrm/libdrm-2.4.101.tar.xz \
+    && tar xvf libdrm-2.4.101.tar.xz \
+    && cd libdrm-2.4.101 && mkdir build && cd build && meson --prefix=${PREFIX} .. -Dudev=true && ninja install
+
+RUN tar cvf libdrm.tar.gz /fakeroot
+
+FROM ubuntu:18.04
+
+WORKDIR /temp
+COPY --from=builder /temp/libdrm.tar.gz /temp
+RUN tar xvf  /temp/libdrm.tar.gz -C /usr/local --strip-components 1 && rm -rf /temp

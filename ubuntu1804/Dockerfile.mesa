@@ -1,0 +1,46 @@
+# cmake ninja meson python3
+FROM llvmenv:latest as builder
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV CMAKE_VER 3.17.1
+
+WORKDIR /temp
+
+ENV PREFIX=/fakeroot
+
+ENV build_depends="libexpat1-dev libelf-dev bison flex libgl1-mesa-dev libwayland-dev wayland-protocols libwayland-egl-backend-dev libxrandr-dev libxrandr2"
+ENV drm_build_packages="libpciaccess-dev pkg-config"
+
+RUN apt-get update && apt-get  -y install ${build_depends} ${drm_build_packages}
+
+# install libdrm
+RUN cd /temp && wget -q https://dri.freedesktop.org/libdrm/libdrm-2.4.101.tar.xz \
+    && tar xvf libdrm-2.4.101.tar.xz \
+    && cd libdrm-2.4.101 && mkdir build && cd build && meson .. -Dudev=true && ninja install
+
+RUN cd /temp \
+    && pip3 install mako \
+    && wget -q https://mesa.freedesktop.org/archive/mesa-20.0.4.tar.xz \
+    && tar xvf mesa-20.0.4.tar.xz  && mkdir build \
+    && cd    build  \
+    && CXXFLAGS="-O2 -g -DDEFAULT_SOFTWARE_DEPTH_BITS=31"   CFLAGS="-O2 -g -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
+     meson \
+     -Dprefix=${PREFIX}             \
+     -Dbuildtype=release            \
+     -Dgallium-drivers="swrast"     \
+     -Dgallium-nine=false           \
+     -Dglx=dri                      \
+     -Dosmesa=gallium               \
+     -Dvalgrind=false               \
+     -Dlibunwind=false              \
+     ../mesa-20.0.4                 \
+     && unset GALLIUM_DRV DRI_DRIVERS \
+     && ninja install
+
+RUN tar cvf mesa.tar.gz /fakeroot
+
+FROM libdrmenv
+
+WORKDIR /temp
+COPY --from=builder /temp/mesa.tar.gz /temp
+RUN tar xvf  /temp/mesa.tar.gz -C /usr/local --strip-components 1 && rm -rf /temp
