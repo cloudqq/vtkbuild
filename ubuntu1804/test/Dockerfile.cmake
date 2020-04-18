@@ -20,11 +20,10 @@ WORKDIR /temp
 
 ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PREFIX}/lib
 
-
 RUN apt-get update && apt-get  -y install ${common_build_packages} \
     ${mesa_build_packages} \
     ${drm_build_packages} \ 
-    ${vtk_build_packages} \
+    ${vtk_build_packages} 
 
 RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-${CMAKE_VER}.tar.gz \
 && tar xvf cmake-${CMAKE_VER}.tar.gz && cd cmake-${CMAKE_VER} && ./bootstrap --prefix=${PREFIX} && make -j`nproc` && make install  \

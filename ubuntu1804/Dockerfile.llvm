@@ -1,0 +1,31 @@
+# cmake ninja meson python3
+FROM buildenv:latest
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV CMAKE_VER 3.17.1
+
+ENV PREFIX=/usr/local
+WORKDIR /temp
+
+RUN cd /temp \
+&& wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/llvm-10.0.0.src.tar.xz \
+&& wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang-10.0.0.src.tar.xz \
+&& wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/compiler-rt-10.0.0.src.tar.xz \
+&& tar xf llvm-10.0.0.src.tar.xz \
+&& cd llvm-10.0.0.src \
+&& tar xvf ../compiler-rt-10.0.0.src.tar.xz -C projects \
+&& tar xvf ../clang-10.0.0.src.tar.xz -C tools \
+&& mv tools/clang-10.0.0.src tools/clang \
+&& mv projects/compiler-rt-10.0.0.src projects/compiler-rt \
+&& mkdir -v build && cd build \
+&& cmake -DCMAKE_INSTALL_PREFIX=${PREFIX}    \
+   -DLLVM_ENABLE_FFI=ON                      \
+   -DCMAKE_BUILD_TYPE=Release                \
+   -DLLVM_BUILD_LLVM_DYLIB=ON                \
+   -DLLVM_LINK_LLVM_DYLIB=ON                 \
+   -DLLVM_ENABLE_RTTI=ON                     \
+   -DLLVM_TARGETS_TO_BUILD="host;AMDGPU;BPF" \
+   -DLLVM_BUILD_TESTS=ON                     \
+   -Wno-dev -G Ninja ..                      \
+&& ninja && ninja install 			 \
+&& rm -rf /temp
