@@ -1,3 +1,3 @@
 #!/bin/sh
 
-docker build . -f Dockerfile.mesa -t mesaenv
+docker build --squash . -f Dockerfile.mesa -t mesaenv

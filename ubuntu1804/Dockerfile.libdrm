@@ -17,7 +17,7 @@ RUN cd /temp && wget -q https://dri.freedesktop.org/libdrm/libdrm-2.4.101.tar.xz
     && tar xvf libdrm-2.4.101.tar.xz \
     && cd libdrm-2.4.101 && mkdir build && cd build && meson --prefix=${PREFIX} .. -Dudev=true && ninja install
 
-RUN tar cvf libdrm.tar.gz /fakeroot
+RUN tar cvf libdrm.tar.gz ${PREFIX}
 
 FROM ubuntu:18.04
 

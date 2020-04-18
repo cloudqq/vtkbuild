@@ -6,8 +6,6 @@ ENV CMAKE_VER 3.17.1
 
 WORKDIR /temp
 
-ENV PREFIX=/fakeroot
-
 ENV build_depends="libexpat1-dev libelf-dev bison flex libgl1-mesa-dev libwayland-dev wayland-protocols libwayland-egl-backend-dev libxrandr-dev libxrandr2"
 ENV drm_build_packages="libpciaccess-dev pkg-config"
 
@@ -17,6 +15,9 @@ RUN apt-get update && apt-get  -y install ${build_depends} ${drm_build_packages}
 RUN cd /temp && wget -q https://dri.freedesktop.org/libdrm/libdrm-2.4.101.tar.xz \
     && tar xvf libdrm-2.4.101.tar.xz \
     && cd libdrm-2.4.101 && mkdir build && cd build && meson .. -Dudev=true && ninja install
+
+ENV PREFIX=/usr
+ENV FAKEROOT=/fakeroot
 
 RUN cd /temp \
     && pip3 install mako \
@@ -35,12 +36,13 @@ RUN cd /temp \
      -Dlibunwind=false              \
      ../mesa-20.0.4                 \
      && unset GALLIUM_DRV DRI_DRIVERS \
-     && ninja install
+     && DESTDIR=${FAKEROOT} ninja install
 
-RUN tar cvf mesa.tar.gz /fakeroot
+RUN tar cvf mesa.tar.gz ${FAKEROOT}
 
-FROM libdrmenv
+FROM libdrmenv:latest
 
 WORKDIR /temp
+
 COPY --from=builder /temp/mesa.tar.gz /temp
-RUN tar xvf  /temp/mesa.tar.gz -C /usr/local --strip-components 1 && rm -rf /temp
+RUN tar xvf  /temp/mesa.tar.gz -C / --strip-components 1 && rm -rf /temp
