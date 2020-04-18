@@ -45,4 +45,5 @@ FROM libdrmenv:latest
 WORKDIR /temp
 
 COPY --from=builder /temp/mesa.tar.gz /temp
+#RUN tar xvf  /temp/mesa.tar.gz -C / --strip-components 1
 RUN tar xvf  /temp/mesa.tar.gz -C / --strip-components 1 && rm -rf /temp
