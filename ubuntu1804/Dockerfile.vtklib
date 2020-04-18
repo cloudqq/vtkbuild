@@ -33,6 +33,9 @@ RUN tar xvf mesa.tar.gz -C / --strip-components 1 && ldconfig
 
 ENV VTK_MAJOR_VER 7.1
 ENV VTK_VER 7.1.1
+
+ENV FAKEROOT=/fakeroot
+
 # install vtk
 RUN cd /temp && wget https://www.vtk.org/files/release/${VTK_MAJOR_VER}/VTK-${VTK_VER}.tar.gz \
     && tar xvf VTK-${VTK_VER}.tar.gz \
@@ -49,5 +52,8 @@ RUN cd /temp && wget https://www.vtk.org/files/release/${VTK_MAJOR_VER}/VTK-${VT
     -D LIBRARY_OUTPUT_PATH=./output_libs \
     -D BOOST_ROOT=${PREFIX} \
     ../VTK-${VTK_VER} \
-    && make -j`nproc` && make install
+    && make -j`nproc` && DESTDIR=${FAKEROOT} make install
+
+
+
 
