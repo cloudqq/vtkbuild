@@ -9,21 +9,22 @@ ENV PREFIX=/opt
 ENV VTK_MAJOR_VER=7.1
 ENV VTK_VER=7.1.1
 
-RUN apt-get update && apt-get  -y install \
-  curl \
-  wget \
-  git \
-  libssl-dev \
-  re2c \
-  libffi-dev \
-  build-essential \
-  zlib1g-dev \
-  libncurses5-dev \
-  libncursesw5-dev 
+ENV PATH=${PATH}:${PREFIX}/bin
+
+ENV common_build_packages="curl wget git libssl-dev  re2c  libffi-dev  build-essential  zlib1g-dev  libncurses5-dev  libncursesw5-dev" 
+ENV mesa_build_packages="libexpat1-dev libelf-dev bison flex libgl1-mesa-dev libwayland-dev wayland-protocols libwayland-egl-backend-dev libxrandr-dev libxrandr2"
+ENV drm_build_packages="libpciaccess-dev pkg-config"
+ENV vtk_build_packages="libxt-dev"
 
 WORKDIR /temp
 
 ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PREFIX}/lib
+
+
+RUN apt-get update && apt-get  -y install ${common_build_packages} \
+    ${mesa_build_packages} \
+    ${drm_build_packages} \ 
+    ${vtk_build_packages} \
 
 RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-${CMAKE_VER}.tar.gz \
 && tar xvf cmake-${CMAKE_VER}.tar.gz && cd cmake-${CMAKE_VER} && ./bootstrap --prefix=${PREFIX} && make -j`nproc` && make install  \
@@ -99,13 +100,10 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-
     && ninja && ninja install 			 \
     && rm -rf /temp
 
-RUN apt-get -y install libpciaccess-dev pkg-config
 # install libdrm
 RUN cd /temp && wget -q https://dri.freedesktop.org/libdrm/libdrm-2.4.101.tar.xz \
     && tar xvf libdrm-2.4.101.tar.xz \
     && cd libdrm-2.4.101 && mkdir build && cd build && meson .. -Dudev=true && ninja install
-
-ENV PATH=${PATH}:${PREFIX}/bin
 
 RUN cd /temp \
     && pip3 install mako \
@@ -138,7 +136,6 @@ RUN cd /temp && wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost
     && ./b2 cxxflags="--std=c++17" -j`nproc` install
 
 
-RUN apt-get -y install libxt-dev 
 # install vtk
 RUN cd /temp && wget https://www.vtk.org/files/release/${VTK_MAJOR_VER}/VTK-${VTK_VER}.tar.gz \
     && tar xvf VTK-${VTK_VER}.tar.gz \
@@ -205,9 +202,6 @@ RUN cd /temp && wget https://www.vtk.org/files/release/${VTK_MAJOR_VER}/VTK-${VT
     #    && make -j`nproc` && make install  
     #    #&& rm -rf /workspace/build-vtk-8.2.0-on && rm -rf /workspace/build-vtk-8.2.0-off
     #
-
-
-
 
 COPY asEnvUser /usr/local/sbin/
 RUN chown root /usr/local/sbin/asEnvUser && chmod 700 /usr/local/sbin/asEnvUser
