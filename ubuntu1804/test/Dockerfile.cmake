@@ -138,6 +138,7 @@ RUN cd /temp && wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost
     && ./b2 cxxflags="--std=c++17" -j`nproc` install
 
 
+RUN apt-get -y install libxt-dev 
 # install vtk
 RUN cd /temp && wget https://www.vtk.org/files/release/${VTK_MAJOR_VER}/VTK-${VTK_VER}.tar.gz \
     && tar xvf VTK-${VTK_VER}.tar.gz \
@@ -163,6 +164,7 @@ RUN cd /temp && wget https://www.vtk.org/files/release/${VTK_MAJOR_VER}/VTK-${VT
     -D VTK_WRAP_PYTHON=ON	 \
     -D VTK_OPENGL_HAS_OSMESA=ON \
     -D VTK_DEFAULT_RENDER_WINDOW_OFFSCREEN=OFF \
+    -D OpenGL_GL_PREFERENCE=GLVND \
     -D VTK_USE_X=ON \
     -D CMAKE_INSTALL_PREFIX=${PREFIX}/vtk${VTK_VER}onscreen \
     -D LIBRARY_OUTPUT_PATH=./output_libs \
