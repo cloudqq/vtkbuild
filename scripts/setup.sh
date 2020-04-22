@@ -2,6 +2,7 @@
 
 USER=cloudqq
 WORKDIR=/mnt/workspace
+IMAGE=cloudqq/vtk711:20200417
 
 docker run -it --rm \
 	-v $(pwd):${WORKDIR} \
@@ -23,6 +24,6 @@ docker run -it --rm \
 	 -p 6808:6808 \
 	 -v ${HOME}/.Xauthority:/home/${USER}/.Xauthority \
 	 -w "${WORKDIR}" \
-	 vtkffmpeg:latest
+	 ${IMAGE}
 
 # xvfb-run -a --server-args="-screen 0 1024x768x24" glxinfo | grep OpenGL
