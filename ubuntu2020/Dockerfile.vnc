@@ -1,0 +1,96 @@
+FROM glbase:latest
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get -y install \
+    curl \
+    wget \
+    cmake \
+    autoconf \
+    pkg-config \
+    git \
+    libssl-dev \
+    python2.7 \
+    re2c \
+    libffi-dev \
+    ninja-build \
+    build-essential \
+    zlib1g-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    libreadline-dev \
+    libsqlite3-dev  \
+    libgdbm-dev \
+    libdb5.3-dev \
+    libbz2-dev \
+    libexpat1-dev \
+    liblzma-dev \
+    tk-dev  \
+    sudo \
+    locales \
+    libpciaccess-dev libelf-dev bison flex \
+    libwayland-dev wayland-protocols libwayland-egl-backend-dev libxdamage-dev libxcb-glx0  libxcb-glx0-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-dri3-dev libgl1-mesa-dev \
+    libxrandr-dev libxrandr2 mesa-utils xvfb x11vnc
+
+
+ENV PYTHON2_VER 2.7.17
+ENV PREFIX=/usr/local
+
+WORKDIR /temp
+
+RUN wget https://www.python.org/ftp/python/${PYTHON2_VER}/Python-${PYTHON2_VER}.tar.xz \
+&& tar xf Python-${PYTHON2_VER}.tar.xz \
+&& cd Python-${PYTHON2_VER} \
+&& ./configure --prefix=${PREFIX} --enable-shared \
+&& make -j `nproc`  \
+&& make altinstall \
+&& update-alternatives --install /usr/bin/python python ${PREFIX}/bin/python2.7 1 \
+&& update-alternatives --config python \
+&& ldconfig \
+&& curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+&& python get-pip.py \
+&& python -mpip install -U pip \
+&& update-alternatives --install /usr/bin/pip pip ${PREFIX}/bin/pip 1 \
+&& update-alternatives --config pip \
+&& pip --version \
+&& rm -rf /temp
+
+RUN wget -nv -O- http://www.vtk.org/files/release/7.1/VTK-7.1.1.tar.gz | \
+    tar xz && \
+    cd VTK-7.1.1 && \
+    cmake \
+    -D CMAKE_BUILD_TYPE:STRING=Release \
+    -D CMAKE_INSTALL_PREFIX:STRING=/usr \
+    -D BUILD_DOCUMENTATION:BOOL=OFF \
+    -D BUILD_EXAMPLES:BOOL=OFF \
+    -D BUILD_TESTING:BOOL=OFF \
+    -D BUILD_SHARED_LIBS:BOOL=ON \
+    -D VTK_USE_X:BOOL=ON \
+    -D VTK_OPENGL_HAS_OSMESA:BOOL=ON \
+    -D OSMESA_LIBRARY=/usr/local/lib/libOSMesa.so.8 \
+    -D OSMESA_INCLUDE_DIR=/usr/local/include/GL/ \
+    -D VTK_RENDERING_BACKEND:STRING=OpenGL \
+    -D VTK_Group_MPI:BOOL=OFF \
+    -D VTK_Group_StandAlone:BOOL=OFF \
+    -D VTK_Group_Rendering:BOOL=ON \
+    -D VTK_WRAP_PYTHON=ON \
+    -D VTK_PYTHON_VERSION:STRING=2 \
+    . && \
+    make -j `nproc` && \
+    make install && \
+    cd .. && rm -rf VTK-7.1.1
+
+WORKDIR /temp
+RUN wget -q https://www.tcpdump.org/release/libpcap-1.9.1.tar.gz \
+&& tar xvf libpcap-1.9.1.tar.gz && cd libpcap-1.9.1 && ./configure && make -j`nproc` && make install
+
+# include boost
+RUN cd /temp && wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 \
+    && tar xjf boost_1_72_0.tar.bz2 && cd boost_1_72_0 \
+    && ./bootstrap.sh \
+    && ./b2 cxxflags="--std=c++17" -j`nproc` install
+
+
+
+
+

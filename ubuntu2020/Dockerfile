@@ -1,6 +1,5 @@
 FROM ubuntu:bionic as builder
 
-
 RUN apt-get update && apt-get install -y libtool-bin autoconf python-pip libx11-dev libxext-dev x11proto-core-dev x11proto-gl-dev libglew-dev freeglut3-dev bison flex
 
 # Build Mesa
@@ -53,3 +52,14 @@ ENV XVFB_WHD="1920x1080x24"\
     DISPLAY=":99" \
     LIBGL_ALWAYS_SOFTWARE="1" \
     GALLIUM_DRIVER="softpipe"
+
+
+EXPOSE 5900
+
+ADD run_supervisord.sh /sbin/
+ENTRYPOINT ["sh", "/sbin/run_supervisord.sh"]
+
+#CMD ["/usr/bin/supervisord","-c","/etc/supervisord.conf"]
+#ENTRYPOINT ["/usr/bin/supervisord","-c","/etc/supervisord.conf"]
+
+#CMD ["bash","/sbin/run_supervisord.sh"]
