@@ -1,3 +1,0 @@
-[submodule "docker-opengl"]
-	path = docker-opengl
-	url = https://github.com/utensils/docker-opengl.git
