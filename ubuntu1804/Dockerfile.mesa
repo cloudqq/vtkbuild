@@ -28,7 +28,7 @@ RUN cd /temp \
      meson \
      -Dprefix=${PREFIX}             \
      -Dbuildtype=release            \
-     -Dgallium-drivers="swrast"     \
+     -Dgallium-drivers="swrast,swr" \
      -Dgallium-nine=false           \
      -Dglx=dri                      \
      -Dosmesa=gallium               \

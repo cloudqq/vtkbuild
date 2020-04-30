@@ -1,0 +1,32 @@
+# cmake ninja meson python3
+FROM ubuntu:18.04 as builder
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV CMAKE_VER 3.17.1
+
+ENV PYTHON2_VER 2.7.17
+ENV PREFIX=/usr/local
+
+WORKDIR /temp
+
+
+RUN apt-get update && apt-get install -y build-essential wget xz-utils curl libssl-dev zlib1g-dev libbz2-dev 
+RUN wget https://www.python.org/ftp/python/${PYTHON2_VER}/Python-${PYTHON2_VER}.tar.xz \
+&& tar xf Python-${PYTHON2_VER}.tar.xz \
+&& cd Python-${PYTHON2_VER} \
+&& ./configure --prefix=${PREFIX} --enable-shared \
+&& make -j `nproc`  \
+&& make altinstall \
+&& update-alternatives --install /usr/bin/python python ${PREFIX}/bin/python2.7 1 \
+&& update-alternatives --config python \
+&& ldconfig \
+&& curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+&& python get-pip.py \
+&& python -mpip install -U pip \
+&& rm -rf /temp
+
+FROM mesaenv:latest 
+
+COPY --from=builder /usr/local /usr/local
+
+
