@@ -1,0 +1,19 @@
+FROM cloudqq/vtkdevenv:20200430
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN mkdir -p /var/cache/apt/archives/partial \
+&& apt-get autoclean \
+&& apt-get update && apt-get install -y openbox xvfb xfce4-terminal  menu x11vnc supervisor
+
+RUN adduser --home /home/cloudqq cloudqq \
+&& usermod -aG cloudqq cloudqq \
+&& echo "cloudqq:cloudqq" | /usr/sbin/chpasswd \
+&& echo "cloudqq ALL=(ALL) ALL" >> /etc/sudoers 
+
+WORKDIR /home/cloduqq
+ADD etc /etc
+EXPOSE 5900
+ADD run_supervisord.sh /sbin/
+ENTRYPOINT ["sh", "/sbin/run_supervisord.sh"]
+
