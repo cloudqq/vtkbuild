@@ -32,12 +32,6 @@ RUN pip3 install -U pip setuptools \
     && meson --version \
     && cd / && rm -rf /temp
 
-
-
-
-FROM buildenv:latest
-
-ENV DEBIAN_FRONTEND noninteractive
 ENV CMAKE_VER 3.17.1
 
 ENV PREFIX=/usr/local
