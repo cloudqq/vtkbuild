@@ -1,2 +1,2 @@
 #!/bin/sh
-docker build . -f Dockerfile.llvm -t llvmenv
+docker build --build-arg http_proxy=http://192.168.2.100:1088 --build-arg https_proxy=http://192.168.2.100:1088 . -f Dockerfile.llvm -t llvmenv

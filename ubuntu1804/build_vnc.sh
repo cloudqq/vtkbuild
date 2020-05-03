@@ -1,1 +1,2 @@
-docker build . -t cloudqq/vncdevenv:20200430 -f Dockerfile.vnc 
+
+docker build --build-arg http_proxy=http://172.31.0.29:1088 --build-arg https_proxy=https://172.31.0.29:1088  . -t cloudqq/vncdevenv:20200430 -f Dockerfile.vnc 

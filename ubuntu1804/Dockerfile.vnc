@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN mkdir -p /var/cache/apt/archives/partial \
 && apt-get autoclean \
-&& apt-get update && apt-get install -y openbox xvfb xfce4-terminal  menu x11vnc supervisor
+&& apt-get update && apt-get install -y openbox xvfb xfce4-terminal  menu x11vnc supervisor sudo
 
 RUN adduser --home /home/cloudqq cloudqq \
 && usermod -aG cloudqq cloudqq \
