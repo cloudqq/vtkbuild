@@ -60,3 +60,200 @@ RUN cd /temp \
 && ninja -j `nproc` && ninja install                        \
 && rm -rf /temp
 
+
+
+
+
+
+
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV CMAKE_VER 3.17.1
+
+WORKDIR /temp
+
+ENV build_depends="libexpat1-dev libelf-dev bison flex libgl1-mesa-dev libwayland-dev wayland-protocols libwayland-egl-backend-dev libxrandr-dev libxrandr2"
+ENV drm_build_packages="libpciaccess-dev pkg-config"
+
+RUN apt-get update && apt-get  -y install ${build_depends} ${drm_build_packages}
+
+# install libdrm
+RUN cd /temp && wget -q https://dri.freedesktop.org/libdrm/libdrm-2.4.101.tar.xz \
+    && tar xvf libdrm-2.4.101.tar.xz \
+    && cd libdrm-2.4.101 && mkdir build && cd build && meson .. -Dudev=true && ninja install
+
+ENV PREFIX=/usr
+ENV FAKEROOT=/fakeroot
+
+RUN cd /temp \
+    && pip3 install mako \
+    && wget -q https://mesa.freedesktop.org/archive/mesa-20.0.4.tar.xz \
+    && tar xvf mesa-20.0.4.tar.xz  && mkdir build \
+    && cd    build  \
+    && CXXFLAGS="-O2 -g -DDEFAULT_SOFTWARE_DEPTH_BITS=31"   CFLAGS="-O2 -g -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
+     meson \
+     -Dprefix=${PREFIX}             \
+     -Dbuildtype=release            \
+     -Dgallium-drivers="swrast,swr" \
+     -Dgallium-nine=false           \
+     -Dglx=dri                      \
+     -Dosmesa=gallium               \
+     -Dvalgrind=false               \
+     -Dlibunwind=false              \
+     ../mesa-20.0.4                 \
+     && unset GALLIUM_DRV DRI_DRIVERS \
+     && DESTDIR=${FAKEROOT} ninja install
+
+
+RUN find $FAKEROOT
+
+
+RUN tar cvf mesa.tar.gz ${FAKEROOT}
+
+
+FROM ubuntu:18.04 as builder-exec
+
+RUN sed --in-place --regexp-extended "s/archive\.ubuntu/azure\.archive\.ubuntu/g" /etc/apt/sources.list \
+  && echo 'APT::Get::Assume-Yes "true";' >> /etc/apt/apt.conf \
+  && apt-get update \
+  && apt-get install build-essential git 
+
+RUN git clone https://github.com/ncopa/su-exec.git /su-exec \
+  && cd /su-exec \
+  && make \
+  && chmod 770 su-exec
+
+
+FROM ubuntu:18.04
+
+
+
+WORKDIR /temp
+
+
+COPY --from=builder /temp/mesa.tar.gz /temp
+COPY --from=builder /usr/local/lib/libLLVM-10.so /usr/local/lib
+RUN cd /usr/local/lib && ln -s libLLVM-10.so libLLVM.so && ln -s libLLVM-10.so libLLVM-10.0.0.so
+#RUN tar xvf  /temp/mesa.tar.gz -C / --strip-components 1
+RUN tar xvf  /temp/mesa.tar.gz -C / --strip-components 1 && rm -rf /temp
+
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get  -y install wget
+
+
+ENV GOLANG_VERSION 1.14.2
+
+RUN set -eux; \
+	\
+# this "case" statement is generated via "update.sh"
+	dpkgArch="$(dpkg --print-architecture)"; \
+	case "${dpkgArch##*-}" in \
+		amd64) goRelArch='linux-amd64'; goRelSha256='6272d6e940ecb71ea5636ddb5fab3933e087c1356173c61f4a803895e947ebb3' ;; \
+		armhf) goRelArch='linux-armv6l'; goRelSha256='eb4550ba741506c2a4057ea4d3a5ad7ed5a887de67c7232f1e4795464361c83c' ;; \
+		arm64) goRelArch='linux-arm64'; goRelSha256='bb6d22fe5806352c3d0826676654e09b6e41eb1af52e8d506d3fa85adf7f8d88' ;; \
+		i386) goRelArch='linux-386'; goRelSha256='cab5f51e6ffb616c6ee963c3d0650ca4e3c4108307c44f2baf233fcb8ff098f6' ;; \
+		ppc64el) goRelArch='linux-ppc64le'; goRelSha256='48c22268c81ced9084a43bbe2c1596d3e636b5560b30a32434a7f15e561de160' ;; \
+		s390x) goRelArch='linux-s390x'; goRelSha256='501cc919648c9d85b901963303c5061ea6814c80f0d35fda9e62980d3ff58cf4' ;; \
+		*) goRelArch='src'; goRelSha256='98de84e69726a66da7b4e58eac41b99cbe274d7e8906eeb8a5b7eb0aadee7f7c'; \
+			echo >&2; echo >&2 "warning: current architecture ($dpkgArch) does not have a corresponding Go binary release; will be building from source"; echo >&2 ;; \
+	esac; \
+	\
+	url="https://golang.org/dl/go${GOLANG_VERSION}.${goRelArch}.tar.gz"; \
+	wget -O go.tgz "$url"; \
+	echo "${goRelSha256} *go.tgz" | sha256sum -c -; \
+	tar -C /usr/local -xzf go.tgz; \
+	rm go.tgz; \
+	\
+	if [ "$goRelArch" = 'src' ]; then \
+		echo >&2; \
+		echo >&2 'error: UNIMPLEMENTED'; \
+		echo >&2 'TODO install golang-any from jessie-backports for GOROOT_BOOTSTRAP (and uninstall after build)'; \
+		echo >&2; \
+		exit 1; \
+	fi; \
+	\
+	export PATH="/usr/local/go/bin:$PATH"; \
+	go version
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ENV PYTHON2_VER 2.7.17
+ENV VTK_MAJOR_VER 7.1
+ENV VTK_VER 7.1.1
+ENV FAKEROOT=/user/local
+
+WORKDIR /temp
+
+ENV build_depends="flex bison"
+ENV build_python_depends="build-essential wget xz-utils curl libssl-dev zlib1g-dev libbz2-dev cmake"
+ENV vtk_onscreen_depends="libx11-dev libxt-dev"
+ENV window_manage_depends="openbox xvfb xfce4-terminal  menu x11vnc supervisor sudo \
+xvfb ffmpeg libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev libpostproc-dev libswresample-dev"
+
+#ENV drm_build_packages="libpciaccess-dev pkg-config"
+
+#    -D PYTHON_INCLUDE_DIR=${PREFIX}/include/python2.7 \
+#    -D PYTHON_LIBRARY=${PREFIX}/lib/libpython2.7.so \
+#    -D PYTHON_EXECUTABLE:FILEPATH=`which python` \
+
+RUN apt-get update && apt-get  -y install ${build_depends} ${build_python_depends} ${vtk_onscreen_depends} ${window_manage_depends} \
+    && wget https://www.vtk.org/files/release/${VTK_MAJOR_VER}/VTK-${VTK_VER}.tar.gz \
+    && tar xvf VTK-${VTK_VER}.tar.gz \
+    && mkdir build && cd build \
+    && cmake \
+    -D CMAKE_BUILD_TYPE=Release \
+    -D VTK_WRAP_PYTHON=OFF	 \
+    -D VTK_OPENGL_HAS_OSMESA=ON \
+    -D VTK_DEFAULT_RENDER_WINDOW_OFFSCREEN=OFF \
+    -D OSMESA_LIBRARY=/usr/lib/x86_64-linux-gnu/libOSMesa.so.8 \
+    -D OSMESA_INCLUDE_DIR=/usr/local/include/GL/ \
+    -D VTK_RENDERING_BACKEND:STRING=OpenGL \
+    -D VTK_USE_X=ON \
+    ../VTK-${VTK_VER} \
+&& make -C /temp/build -j`nproc` && make -C /temp/build install \
+&& cd /temp && wget -q https://www.tcpdump.org/release/libpcap-1.9.1.tar.gz \
+&& tar xvf libpcap-1.9.1.tar.gz && cd libpcap-1.9.1 && ./configure  && make -j`nproc` &&  make install \
+&& cd /temp && wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 \
+    && tar xjf boost_1_72_0.tar.bz2 && cd boost_1_72_0 \
+    && ./bootstrap.sh \
+    && ./b2 --without-python cxxflags="--std=c++17" -j`nproc` install \
+    && apt-get clean && rm -rf /var/cache && rm -rf /temp
+
+
+RUN ldconfig
+# copy su-exec  from builder-exec
+
+COPY --from=builder-exec /su-exec/su-exec /usr/local/sbin
+COPY asEnvUser /usr/local/sbin/
+
+RUN adduser --home /home/cloudqq cloudqq \
+&& usermod -aG cloudqq cloudqq \
+&& echo "cloudqq:cloudqq" | /usr/sbin/chpasswd \
+&& echo "cloudqq ALL=(ALL) ALL" >> /etc/sudoers 
+#
+WORKDIR /home/cloduqq
+ADD etc /etc
+EXPOSE 5900
+ADD run_supervisord.sh /sbin/
+RUN chmod +x /sbin/run_supervisord.sh
+ENTRYPOINT ["sh", "/sbin/run_supervisord.sh"]
