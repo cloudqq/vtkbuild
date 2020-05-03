@@ -38,9 +38,9 @@ ENV PREFIX=/usr/local
 WORKDIR /temp
 
 RUN cd /temp \
-&& wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/llvm-10.0.0.src.tar.xz \
-&& wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang-10.0.0.src.tar.xz \
-&& wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/compiler-rt-10.0.0.src.tar.xz \
+&& wget  https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/llvm-10.0.0.src.tar.xz \
+&& wget  https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/clang-10.0.0.src.tar.xz \
+&& wget  https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/compiler-rt-10.0.0.src.tar.xz \
 && tar xf llvm-10.0.0.src.tar.xz \
 && cd llvm-10.0.0.src \
 && tar xvf ../compiler-rt-10.0.0.src.tar.xz -C projects \
@@ -57,6 +57,6 @@ RUN cd /temp \
    -DLLVM_TARGETS_TO_BUILD="host;AMDGPU;BPF" \
    -DLLVM_BUILD_TESTS=ON                     \
    -Wno-dev -G Ninja ..                      \
-&& ninja && ninja install                        \
+&& ninja -j `nproc` && ninja install                        \
 && rm -rf /temp
 
