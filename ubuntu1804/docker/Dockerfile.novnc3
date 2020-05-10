@@ -200,15 +200,19 @@ RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 ENV PYTHON2_VER 2.7.17
 ENV VTK_MAJOR_VER 7.1
 ENV VTK_VER 7.1.1
-ENV FAKEROOT=/user/local
+ENV FAKEROOT=/usr/local
 
 WORKDIR /temp
 
+ENV PREFIX=/usr/local
+
 ENV build_depends="flex bison"
-ENV build_python_depends="build-essential wget xz-utils curl libssl-dev zlib1g-dev libbz2-dev cmake libpython2.7 python2.7-dev"
+ENV build_python_depends="build-essential wget xz-utils curl libssl-dev zlib1g-dev libbz2-dev cmake"
 ENV vtk_onscreen_depends="libx11-dev libxt-dev"
 ENV window_manage_depends="openbox xvfb xfce4-terminal  menu x11vnc supervisor sudo \
 xvfb ffmpeg libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev libpostproc-dev libswresample-dev"
+
+
 
 #ENV drm_build_packages="libpciaccess-dev pkg-config"
 
@@ -216,44 +220,5 @@ xvfb ffmpeg libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libav
 #    -D PYTHON_LIBRARY=${PREFIX}/lib/libpython2.7.so \
 #    -D PYTHON_EXECUTABLE:FILEPATH=`which python` \
 
-RUN apt-get update && apt-get  -y install ${build_depends} ${build_python_depends} ${vtk_onscreen_depends} ${window_manage_depends} \
-    && wget https://www.vtk.org/files/release/${VTK_MAJOR_VER}/VTK-${VTK_VER}.tar.gz \
-    && tar xvf VTK-${VTK_VER}.tar.gz \
-    && mkdir build && cd build \
-    && cmake \
-    -D CMAKE_BUILD_TYPE=Release \
-    -D VTK_WRAP_PYTHON=OFF	 \
-    -D VTK_OPENGL_HAS_OSMESA=ON \
-    -D VTK_DEFAULT_RENDER_WINDOW_OFFSCREEN=OFF \
-    -D OSMESA_LIBRARY=/usr/lib/x86_64-linux-gnu/libOSMesa.so.8 \
-    -D OSMESA_INCLUDE_DIR=/usr/local/include/GL/ \
-    -D VTK_RENDERING_BACKEND:STRING=OpenGL \
-    -D VTK_USE_X=ON \
-    ../VTK-${VTK_VER} \
-&& make -C /temp/build -j`nproc` && make -C /temp/build install \
-&& cd /temp && wget -q https://www.tcpdump.org/release/libpcap-1.9.1.tar.gz \
-&& tar xvf libpcap-1.9.1.tar.gz && cd libpcap-1.9.1 && ./configure  && make -j`nproc` &&  make install \
-&& cd /temp && wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 \
-    && tar xjf boost_1_72_0.tar.bz2 && cd boost_1_72_0 \
-    && ./bootstrap.sh \
-    && ./b2 --without-python cxxflags="--std=c++17" -j`nproc` install \
-    && apt-get clean && rm -rf /var/cache && rm -rf /temp
+RUN apt-get update && apt-get  -y install ${build_depends} ${build_python_depends} ${vtk_onscreen_depends} ${window_manage_depends} 
 
-
-RUN ldconfig
-# copy su-exec  from builder-exec
-
-COPY --from=builder-exec /su-exec/su-exec /usr/local/sbin
-COPY asEnvUser /usr/local/sbin/
-
-RUN adduser --home /home/cloudqq cloudqq \
-&& usermod -aG cloudqq cloudqq \
-&& echo "cloudqq:cloudqq" | /usr/sbin/chpasswd \
-&& echo "cloudqq ALL=(ALL) ALL" >> /etc/sudoers 
-#
-WORKDIR /home/cloduqq
-ADD etc /etc
-EXPOSE 5900
-ADD run_supervisord.sh /sbin/
-RUN chmod +x /sbin/run_supervisord.sh
-ENTRYPOINT ["sh", "/sbin/run_supervisord.sh"]
